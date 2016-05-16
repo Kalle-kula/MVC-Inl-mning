@@ -1,0 +1,208 @@
+﻿@using Project.Web.Models
+@model Project.Web.Models.ProductListViewModel
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<style>
+    .hide-comp, .hide-cp {
+        display: none;
+    }
+</style>
+<h2>Index</h2>
+
+<input type="hidden" id="userName" value="@TempData["name"].ToString()"/>
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>ProductListViewModel</h4>
+        <hr />
+        <div class="row">
+            <div class="col-md-4">
+                <div class="list-group">
+                    @foreach (var prod in Model.Products)
+                    {
+                        <input type="hidden" value="@prod.Id" />
+                        <button type="button" id="product_@prod.Id" class="list-group-item">@prod.Name</button>
+                    }
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="list-group">
+                    @foreach (var c in Model.Components)
+                    {
+                        <input type="hidden" value="@c.Id" />
+                        <button type="button" id="comp_@c.ProductId" class="list-group-item hide-comp comp" data-compId="@c.Id">@c.ComponentName</button>
+                    }
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="list-group">
+                    @foreach (var cp in Model.ComponentParts)
+                    {
+                        <input type="hidden" value="@cp.Id" />
+                        <button type="button" id="part_@cp.ComponentId" data-compatibleType="@cp.CompatibleType" data-parentId="@cp.ComponentId" data-price="@cp.Price" class="list-group-item hide-cp cp">@cp.Name</button>
+                    }
+                </div>
+            </div>
+
+            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+            <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <input type="button" value="Save" id="save-btn" class="btn btn-default pull-right" />
+                </div>
+            </div>
+
+            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+            <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <input type="button" value="Clear" id="clear-btn" class="btn btn-default pull-right" />
+                </div>
+            </div>
+
+
+            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+            <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <input type="button" value="Place order" disabled id="order-btn" class="btn btn-success pull-right" />
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div>
+    @Html.ActionLink("Back to List", "Index")
+</div>
+
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery.validate.min.js"></script>
+<script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
+
+<script>
+    $(function () {
+        var productId,
+            componentId;
+
+        //Product click event
+        $("[id^=product_]").click(function () {
+            $(this).siblings().removeClass('active');
+            $(this).addClass('active');
+
+            productId = $(this).attr('id');
+            productId = productId.toString().substring(productId.toString().indexOf("_") + 1);
+            $(".comp").addClass('hide-comp');
+            $(".hide-comp[id$=" + productId + "]").removeClass('hide-comp').addClass('active');
+        });
+
+
+        //Component click event
+        $("[id^=comp_]").click(function () {
+            componentId = $(this).attr('data-compId');
+            $(".cp").addClass('hide-cp');
+            $(".hide-cp[id$=" + componentId + "]").removeClass('hide-cp');
+        });
+
+
+        //Component part click event
+        $("[id^=part_]").click(function () {
+            $(this).siblings('button[data-parentId="' + componentId + '"]').removeClass('active');
+            $(this).addClass('active');
+
+            var compType = $(this).attr('data-compatibleType');
+
+            if (compType == 1) {
+                $("button[data-compatibleType]").prop('disabled', false);
+                $("[data-compatibleType=3]").prop('disabled', true);
+            } else if (compType == 3) {
+                $("button[data-compatibleType]").prop('disabled', false);
+                $("[data-compatibleType=1]").prop('disabled', true);
+            }
+        });
+
+
+        //Save button event
+        $('#save-btn').click(function () {
+            if ($('table').length) {
+                return false;
+            }
+
+            console.log($('#userName').val());
+            var activatedButtons = document.querySelectorAll('.active'),
+            table = '<div class="panel panel-default">';
+            table += '<div class="panel-heading">' + activatedButtons[0].textContent + '</div>';
+            table += '<table class="table">';
+            table += '<tr><th>Product</th><th>Components</th><th>Component Parts</th><th>Price</th></tr>';
+            table += '<tr><td>' + activatedButtons[0].textContent + '</td><td>' + activatedButtons[2].textContent + '</td><td>' + activatedButtons[5].textContent + '</td><td>' + activatedButtons[5].attributes[4].textContent + '</td></tr>';
+            table += '<tr><td>' + activatedButtons[0].textContent + '</td><td>' + activatedButtons[3].textContent + '</td><td>' + activatedButtons[6].textContent + '</td><td>' + activatedButtons[6].attributes[4].textContent + '</td></tr>';
+            table += '<tr><td>' + activatedButtons[0].textContent + '</td><td>' + activatedButtons[1].textContent + '</td><td>' + activatedButtons[4].textContent + '</td><td>' + activatedButtons[4].attributes[4].textContent + '</td></tr>';
+            table += '<tr><td></td><td></td><td><b>Total price</b></td><td>' + (parseInt(activatedButtons[4].attributes[4].textContent) + parseInt(activatedButtons[5].attributes[4].textContent) + parseInt(activatedButtons[6].attributes[4].textContent)) + ' kr</td></tr>';
+            table += '</table></div>';
+
+            $('#order-btn').removeAttr('disabled');
+
+            $(this).before(table);
+        });
+
+        //Place order button event
+        $('#order-btn').click(function () {
+            var prodName = $('table tr:nth-child(2) td:first-child').text(),
+                totalPrice = $('table tr:last-child td:last-child').text(),
+                firstCompName = $('table tr:nth-child(2) td:nth-child(2)').text(),
+                firstCompType = $('table tr:nth-child(2) td:nth-child(3)').text(),
+                secCompName = $('table tr:nth-child(3) td:nth-child(2)').text(),
+                secCompType = $('table tr:nth-child(3) td:nth-child(3)').text(),
+                thiCompName = $('table tr:nth-child(4) td:nth-child(2)').text(),
+                thiCompType = $('table tr:nth-child(4) td:nth-child(3)').text();
+
+            var comp1 = { "Name": firstCompName, "Type": firstCompType };
+            var comp2 = { "Name": secCompName, "Type": secCompType };
+            var comp3 = { "Name": thiCompName, "Type": thiCompType };
+
+            
+            console.log(comp1);
+            console.log(comp2);
+            console.log(comp3);
+
+
+            console.log($('#userName').val());
+
+            var order = {
+                "productName": prodName,
+                "totalPrice": totalPrice,
+                "details": [
+                    comp1, comp2, comp3
+                ],
+                "userName": $('#userName').val()
+        };
+
+            $.ajax({
+                type: "POST",
+                url: "Customer/PlaceOrder",
+                data: JSON.stringify(order),
+                contentType: "application/json",
+                dataType: "json",
+                success: function (reponse) {
+                    alert(reponse);
+                },
+                error: function (e) {
+                    console.log(e);
+                }
+            });           
+        });
+
+
+        //Clear button event
+        $('#clear-btn').click(function () {
+            $(".panel").remove();
+            $('button.active').removeClass('active');
+            $("[id^=comp_]").addClass('hide-comp');
+            $("[id$=" + componentId + "]").addClass('hide-cp');
+            $("button[data-compatibleType]").prop('disabled', false);
+            $('#order-btn').attr('disabled', 'disabled');
+        });
+    });
+</script>

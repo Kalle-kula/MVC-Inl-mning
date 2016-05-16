@@ -1,0 +1,13 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+You are now logged in as: @HttpContext.Current.User.Identity.Name
+
+<p>
+    @Html.ActionLink("Logout", "Logout", "Login")
+</p>
+

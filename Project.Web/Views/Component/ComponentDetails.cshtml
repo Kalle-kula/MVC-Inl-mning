@@ -1,0 +1,76 @@
+﻿@model Project.Web.Models.ComponentDetailsViewModel
+
+@{
+    ViewBag.Title = "Product Details";
+}
+
+<h2>Components Details</h2>
+
+<div class="alert-success">@TempData["Deleted"]</div>
+<div>
+    <h4>@Model.Name</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Price)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Price)
+        </dd>
+      
+    </dl>
+</div>
+<br />
+<h4>@Html.DisplayNameFor(m => m.Parts):</h4>
+
+@if (Model.Parts != null && Model.Parts.Count != 0)
+{
+    <table class="table">
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Price)
+            </th>
+            <th></th>
+        </tr>
+
+        @foreach (var item in Model.Parts)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(c => item.Name)
+                </td>
+                <td>
+                    @String.Format("{0:C}", Html.DisplayFor(m => item.Price))
+                </td>
+                <td>
+                    @Html.ActionLink("Edit", "Edit", "ComponentPart", new { componentId = item.Component.Id, componentPartId = item.Id }, null) | 
+                    @Html.ActionLink("Delete", "Delete", "ComponentPart", new { componentPartId = item.Id, componentId = item.Component.Id }, null)
+                    @*@@Html.ActionLink("Edit", "Edit", "ComponentPart", new { productId = item.Product.Id, componentId = item.Id }, null) |
+                    @Html.ActionLink("Delete", "Delete", "ComponentPart", new { componentId = item.Id, productId = item.Product.Id }, null)*@
+                </td>
+            </tr>
+        }
+    </table>
+}
+else
+{
+    <div id="emptyList"><b>There are no component parts.</b></div>
+}
+<br />
+<br />
+<p>
+    @Html.ActionLink("Back To Products", "Index", "Product") |
+    @Html.ActionLink("Back To Product Details", "ProductDetails", "Product", new { id = Model.ProductId }, null) | 
+    @Html.ActionLink("Create New Component Part", "CreateComponentPart", "ComponentPart", new { id = Model.Id }, null)
